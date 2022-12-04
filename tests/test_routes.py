@@ -60,8 +60,18 @@ def test_create_link(client):
     response = client.post(
         "/", json=dict(code="test-create", redirect_to="https://example.com/", created_by="somebody")
     )
-    assert response.status_code == 204
+    assert response.status_code == 201
     assert db.session.query(ShortenedLink).filter(ShortenedLink.code == "test-create").first() is not None
+
+
+def test_create_link_auto_code(client):
+    assert db.session.query(ShortenedLink).filter(ShortenedLink.code == "test-create").first() is None
+    response = client.post("/", json=dict(redirect_to="https://example.com/", created_by="somebody"))
+    assert response.status_code == 201
+    assert (
+        db.session.query(ShortenedLink).filter(ShortenedLink.code == response.get_data(as_text=True).strip()).first()
+        is not None
+    )
 
 
 def test_create_link_bad_url(client):

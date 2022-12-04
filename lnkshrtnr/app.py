@@ -107,7 +107,7 @@ def simple_redirect(code):
         if "default_parameter" in request.json:
             link.default_parameter = request.form["default_parameter"]
         db.session.add(link)
-        db.session.flush()
+        db.session.flush() if os.getenv("TESTING") else db.session.commit()
         logger.info(UPDATE_EVENT, code=code, redirect_to=redirect_to, result="success")
         return "", 204
     elif request.method == "DELETE":
@@ -122,7 +122,7 @@ def simple_redirect(code):
             abort(404)
         link.deleted_at = datetime.datetime.now(datetime.timezone.utc)
         db.session.add(link)
-        db.session.flush()
+        db.session.flush() if os.getenv("TESTING") else db.session.commit()
         logger.info(DELETE_EVENT, code=code, result="success")
         return "", 204
 
@@ -180,7 +180,7 @@ def create_redirect():
             code=code, redirect_to=redirect_to, default_parameter=default_parameter, created_by=created_by
         )
         db.session.add(link)
-        db.session.flush()
+        db.session.flush() if os.getenv("TESTING") else db.session.commit()
         logger.info(CREATE_EVENT, code=code, redirect_to=redirect_to, result="success")
         return code, 201
     except KeyError as e:
