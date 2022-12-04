@@ -35,7 +35,7 @@ app.wsgi_app = WoodchipperLambda(app.wsgi_app)
 WoodchipperFlask(app).chipperize()
 
 db = SQLAlchemy()
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://" if os.getenv("TESTING") else os.getenv("DATABASE_URI")
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://" if os.getenv("TESTING") else os.getenv("DATABASE_URL")
 db.init_app(app)
 alembic = Alembic()
 alembic.init_app(app)
@@ -180,7 +180,7 @@ def create_redirect():
         db.session.add(link)
         db.session.flush()
         logger.info(CREATE_EVENT, code=code, redirect_to=redirect_to, result="success")
-        return "", 204
+        return code, 201
     except KeyError as e:
         logger.info(CREATE_EVENT, code=code, redirect_to=redirect_to, result="missing_arg")
         return str(e), 400
