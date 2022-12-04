@@ -35,7 +35,9 @@ app.wsgi_app = WoodchipperLambda(app.wsgi_app)
 WoodchipperFlask(app).chipperize()
 
 db = SQLAlchemy()
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://" if os.getenv("TESTING") else os.getenv("DATABASE_URL")
+app.config["SQLALCHEMY_DATABASE_URI"] = (
+    "sqlite://" if os.getenv("TESTING") else os.getenv("DATABASE_URL").replace("postgres://", "postgresql://")
+)
 db.init_app(app)
 alembic = Alembic()
 alembic.init_app(app)
