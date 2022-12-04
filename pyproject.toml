@@ -1,0 +1,29 @@
+[tool.black]
+line-length = 119
+target-version = ['py39']
+include = '\.pyi?$'
+exclude = '''
+
+(
+  /(
+    | \.circleci
+    | \.git          # root of the project
+    | \.github
+    | \.githooks
+    | \.pytest_cache
+    | \.mypy_cache
+    | \.direnv
+    | venv
+    | alembic
+  )/
+)
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 119
+multi_line_output = 3
+skip = ["alembic", ".direnv", ".githooks"]
+
+[tool.pytest]
+norecursedirs="tests/mocks"

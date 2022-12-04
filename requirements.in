@@ -1,0 +1,9 @@
+Flask
+SQLAlchemy
+flask-SQLAlchemy
+flask-alembic
+psycopg2-binary
+slack_bolt
+woodchipper
+validators
+gunicorn
