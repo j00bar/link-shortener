@@ -135,6 +135,8 @@ def test_get_simple_link(client, simple_link):
     response = client.get("/" + simple_link.code)
     assert response.status_code == 302
     assert response.headers["Location"] == simple_link.redirect_to
+    db.session.refresh(simple_link)
+    assert simple_link.clicks == 1
 
 
 def test_get_simple_link_but_with_parameter(client, simple_link):

@@ -10,7 +10,7 @@ import woodchipper
 from flask import Flask, abort, redirect, request
 from flask_alembic import Alembic
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Column, DateTime, String
+from sqlalchemy import Column, DateTime, Integer, String, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import func
 from woodchipper import configs
@@ -47,6 +47,7 @@ class ShortenedLink(db.Model):
     code = Column(String, primary_key=True, nullable=False)
     default_parameter = Column(String, nullable=True)
     redirect_to = Column(String, nullable=False)
+    clicks = Column(Integer, default=0)
     created_by = Column(String, nullable=False)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
@@ -88,6 +89,10 @@ def simple_redirect(code):
                 abort(404)
         else:
             redirect_to = link.redirect_to
+        db.session.execute(
+            update(ShortenedLink).where(ShortenedLink.code == link.code).values(clicks=(ShortenedLink.clicks + 1))
+        )
+        db.session.flush() if os.getenv("TESTING") else db.session.commit()
         logger.info(REDIRECT_EVENT, code=code, parameter=None, result="success")
         return redirect(redirect_to)
     elif request.method == "PUT":
