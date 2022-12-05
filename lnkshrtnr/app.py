@@ -4,10 +4,12 @@ import os
 import random
 import re
 import string
+from io import BytesIO
 
+import pyqrcode
 import validators.url
 import woodchipper
-from flask import Flask, abort, redirect, request
+from flask import Flask, abort, redirect, request, send_file
 from flask_alembic import Alembic
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, DateTime, Integer, String, update
@@ -64,8 +66,24 @@ REDIRECT_EVENT = "Shortened link redirect requested."
 UPDATE_EVENT = "Shortened link update request."
 DELETE_EVENT = "Shortened link delete requested."
 CREATE_EVENT = "Shortened link create requested."
+INVALID_QR_FORMAT = "Invalid QR code format requested."
 PARAMETER_PLACEHOLDER = "{}"
 VALID_CODE_RE = re.compile(r"^[a-z0-9_\.-]+$")
+
+
+def qrcode_for_link(format, code, param=None):
+    url = f"https://{os.getenv('HOSTNAME')}/{code}{'/'+param if param else ''}"
+    qr = pyqrcode.create(url, error="H")
+    buffer = BytesIO()
+    if format == "png":
+        qr.png(buffer, scale=10)
+        return "image/png", buffer
+    if format == "eps":
+        qr.eps(buffer, scale=10)
+        return "application/postscript", buffer
+    if format == "svg":
+        qr.svg(buffer, scale=10)
+        return "image/svg+xml", buffer
 
 
 @app.route("/<code>", methods=["GET", "PUT", "DELETE"])
@@ -89,6 +107,12 @@ def simple_redirect(code):
                 abort(404)
         else:
             redirect_to = link.redirect_to
+        if format := request.args.get("qr"):
+            if format not in ["svg", "png", "eps"]:
+                logger.warning(INVALID_QR_FORMAT, format=format)
+                abort(400)
+            content_type, buffer = qrcode_for_link(format, code)
+            return send_file(buffer, as_attachment=True, download_name=f"{code}.{format}", mimetype=content_type)
         db.session.execute(
             update(ShortenedLink).where(ShortenedLink.code == link.code).values(clicks=(ShortenedLink.clicks + 1))
         )
@@ -148,6 +172,18 @@ def redirect_with_parameter(code, parameter):
         abort(404)
     else:
         redirect_to = link.redirect_to.replace(PARAMETER_PLACEHOLDER, parameter, 1)
+    if format := request.args.get("qr"):
+        if format not in ["svg", "png", "eps"]:
+            logger.warning(INVALID_QR_FORMAT, format=format)
+            abort(400)
+        content_type, buffer = qrcode_for_link(format, code, parameter)
+        return send_file(
+            buffer, as_attachment=True, download_name=f"{code}-{parameter}.{format}", mimetype=content_type
+        )
+    db.session.execute(
+        update(ShortenedLink).where(ShortenedLink.code == link.code).values(clicks=(ShortenedLink.clicks + 1))
+    )
+    db.session.flush() if os.getenv("TESTING") else db.session.commit()
     logger.info(REDIRECT_EVENT, code=code, parameter=parameter, result="success")
     return redirect(redirect_to)
 

@@ -40,6 +40,10 @@ markupsafe==2.1.1
     #   werkzeug
 psycopg2-binary==2.9.5
     # via -r requirements.in
+pypng==0.20220715.0
+    # via -r requirements.in
+pyqrcode==1.2.1
+    # via -r requirements.in
 slack-bolt==1.15.3
     # via -r requirements.in
 slack-sdk==3.19.3

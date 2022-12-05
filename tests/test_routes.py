@@ -139,6 +139,13 @@ def test_get_simple_link(client, simple_link):
     assert simple_link.clicks == 1
 
 
+def test_get_simple_link_as_qrcode(client, simple_link):
+    response = client.get(f"/{simple_link.code}?qr=png")
+    assert response.status_code == 200
+    assert response.headers.get("Content-Disposition") == f"attachment; filename={simple_link.code}.png"
+    assert response.content_type == "image/png"
+
+
 def test_get_simple_link_but_with_parameter(client, simple_link):
     response = client.get("/" + simple_link.code + "/extra")
     assert response.status_code == 404
