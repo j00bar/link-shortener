@@ -12,6 +12,6 @@ from . import routes  # noqa
 slack_handler = SlackRequestHandler(slack_app)
 
 
-@app.route("/slack", methods=["POST"])
+@app.route("/_slack/command", methods=["POST"])
 def slack_route():
     return slack_handler.handle(request)
