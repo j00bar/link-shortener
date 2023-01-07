@@ -9,7 +9,7 @@ setup_database(app)
 
 from . import routes  # noqa
 
-slack_handler = SlackRequestHandler(slack_app)
+slack_handler = SlackRequestHandler(slack_app.app)
 
 
 @app.route("/_slack/command", methods=["POST"])
