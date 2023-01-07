@@ -1,0 +1,5 @@
+REDIRECT_EVENT = "Shortened link redirect requested."
+UPDATE_EVENT = "Shortened link update request."
+DELETE_EVENT = "Shortened link delete requested."
+CREATE_EVENT = "Shortened link create requested."
+INVALID_QR_FORMAT = "Invalid QR code format requested."

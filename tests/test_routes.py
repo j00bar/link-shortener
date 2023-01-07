@@ -2,7 +2,10 @@ import os
 
 import pytest
 
-from lnkshrtnr.app import PARAMETER_PLACEHOLDER, ShortenedLink, app, db
+from lnkshrtnr.app import app
+from lnkshrtnr.database import db
+from lnkshrtnr.models import ShortenedLink
+from lnkshrtnr.repository import PARAMETER_PLACEHOLDER
 
 
 @pytest.fixture(scope="function")
