@@ -23,13 +23,15 @@ def qrcode_for_link(format, code, param=None):
     buffer = BytesIO()
     if format == "png":
         qr.png(buffer, scale=10)
-        return "image/png", buffer
+        content_type = "image/png"
     if format == "eps":
         qr.eps(buffer, scale=10)
-        return "application/postscript", buffer
+        content_type = "application/postscript"
     if format == "svg":
         qr.svg(buffer, scale=10)
-        return "image/svg+xml", buffer
+        content_type = "image/svg+xml"
+    buffer.seek(0)
+    return content_type, buffer
 
 
 def record_click(shortened_link):

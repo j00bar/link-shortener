@@ -87,7 +87,10 @@ def redirect_with_parameter(code, parameter):
             abort(400)
         content_type, buffer = repository.qrcode_for_link(format, code, parameter)
         return send_file(
-            buffer, as_attachment=True, download_name=f"{code}-{parameter}.{format}", mimetype=content_type
+            buffer,
+            as_attachment=True,
+            download_name=f"{code}-{parameter}.{format}",
+            mimetype=content_type,
         )
     repository.record_click(link)
     db.session.flush() if os.getenv("TESTING") else db.session.commit()

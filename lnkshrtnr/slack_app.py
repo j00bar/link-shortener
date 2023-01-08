@@ -40,7 +40,7 @@ def shorten_link_command(ack, respond, context, command):
 
         # Send message indicating success
         logger.info("Successfully created redirect.", code=code, redirect_to=redirect_to)
-        respond(f"Successfully created redirect with code '{code}'")
+        respond(f"Successfully created redirect: <https://{os.getenv('HOSTNAME')}/{code}>")
     except Exception as e:
         # Catch error and send message indicating error and details
         logger.exception("Error creating redirect.", code=code, redirect_to=redirect_to)
