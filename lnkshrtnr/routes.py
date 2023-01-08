@@ -24,7 +24,7 @@ def simple_redirect(code):
             logger.info(events.REDIRECT_EVENT, code=code, parameter=None, result="not_found")
             abort(404)
         if repository.PARAMETER_PLACEHOLDER in link.redirect_to:
-            if link.default_parameter:
+            if link.default_parameter is not None:
                 redirect_to = link.redirect_to.replace(repository.PARAMETER_PLACEHOLDER, link.default_parameter, 1)
             else:
                 logger.info(events.REDIRECT_EVENT, code=code, parameter=None, result="not_found")
