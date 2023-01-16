@@ -10,3 +10,6 @@ gunicorn
 pyqrcode
 pypng
 slack_bolt
+pyyaml
+ua-parser
+user-agents

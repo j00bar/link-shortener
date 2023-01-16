@@ -44,6 +44,8 @@ pypng==0.20220715.0
     # via -r requirements.in
 pyqrcode==1.2.1
     # via -r requirements.in
+pyyaml==6.0
+    # via -r requirements.in
 slack-bolt==1.15.3
     # via -r requirements.in
 slack-sdk==3.19.3
@@ -56,6 +58,12 @@ sqlalchemy==1.4.44
     #   flask-sqlalchemy
 structlog==22.1.0
     # via woodchipper
+ua-parser==0.16.1
+    # via
+    #   -r requirements.in
+    #   user-agents
+user-agents==2.2.0
+    # via -r requirements.in
 validators==0.20.0
     # via -r requirements.in
 werkzeug==2.2.2

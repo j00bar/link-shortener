@@ -6,8 +6,10 @@ from io import BytesIO
 
 import pyqrcode
 import validators.url
+from flask import request
 from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError
+from user_agents import parse
 
 from .database import db
 from .exceptions import LinkShortenerException
@@ -35,6 +37,12 @@ def qrcode_for_link(format, code, param=None):
 
 
 def record_click(shortened_link):
+    try:
+        user_agent = request.headers.get("user-agent")
+        if parse(user_agent).is_bot:
+            return
+    except RuntimeError:
+        pass
     db.session.execute(
         update(ShortenedLink)
         .where(ShortenedLink.code == shortened_link.code)
