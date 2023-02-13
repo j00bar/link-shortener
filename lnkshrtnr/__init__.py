@@ -23,4 +23,5 @@ def setup_app():
     app.config["SQLALCHEMY_DATABASE_URI"] = (
         "sqlite://" if os.getenv("TESTING") else os.getenv("DATABASE_URL").replace("postgres://", "postgresql://")
     )
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = dict(pool_recycle=600)
     return app
