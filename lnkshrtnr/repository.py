@@ -3,6 +3,7 @@ import random
 import re
 import string
 from io import BytesIO
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 import pyqrcode
 import validators.url
@@ -13,14 +14,27 @@ from user_agents import parse
 
 from .database import db
 from .exceptions import LinkShortenerException
-from .models import ShortenedLink
+from .models import ShortenedLink, ShortenedLinkClick
 
 VALID_CODE_RE = re.compile(r"^[a-z0-9_\.-]+$")
 PARAMETER_PLACEHOLDER = "{}"
 
 
-def qrcode_for_link(format, code, param=None):
+def merge_utm_tags(url, utm_tags):
+    if utm_tags:
+        url_parts = urlparse(url)
+        qs = parse_qs(url_parts.query)
+        for utm_tag in ["source", "medium", "campaign", "term", "content"]:
+            if utm_tag in utm_tags:
+                qs[f"utm_{utm_tag}"] = utm_tags[utm_tag]
+        new_query = urlencode(qs, doseq=True)
+        url = urlunparse(url_parts._replace(query=new_query))
+    return url
+
+
+def qrcode_for_link(format, code, param=None, **utm_tags):
     url = f"https://{os.getenv('HOSTNAME')}/{code}{'/'+param if param else ''}"
+    url = merge_utm_tags(url, utm_tags)
     qr = pyqrcode.create(url, error="H")
     buffer = BytesIO()
     if format == "png":
@@ -48,6 +62,19 @@ def record_click(shortened_link):
         .where(ShortenedLink.code == shortened_link.code)
         .values(clicks=(ShortenedLink.clicks + 1))
     )
+    click = ShortenedLinkClick(
+        link_id=shortened_link.code,
+        client_ip=request.headers.get("x-forwarded-for", ""),
+        referer=request.headers.get("referer", ""),
+        user_agent=user_agent,
+        source=request.args.get("utm_source"),
+        medium=request.args.get("utm_medium"),
+        campaign=request.args.get("utm_campaign"),
+        term=request.args.get("utm_term"),
+        content=request.args.get("utm_content"),
+    )
+    db.session.add(click)
+    db.session.flush()
 
 
 def get_link_by_code(code):
@@ -55,6 +82,15 @@ def get_link_by_code(code):
         db.session.query(ShortenedLink)
         .filter(ShortenedLink.code == code, ShortenedLink.deleted_at == None)  # noqa: E711
         .first()
+    )
+
+
+def get_clicks_for_link(code):
+    return (
+        db.session.query(ShortenedLinkClick)
+        .filter(ShortenedLinkClick.link_id == code)
+        .order_by(ShortenedLinkClick.clicked_at.desc())
+        .all()
     )
 
 

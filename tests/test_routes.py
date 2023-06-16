@@ -3,7 +3,7 @@ import pytest
 from lnkshrtnr.app import app
 from lnkshrtnr.database import db
 from lnkshrtnr.models import ShortenedLink
-from lnkshrtnr.repository import PARAMETER_PLACEHOLDER
+from lnkshrtnr.repository import PARAMETER_PLACEHOLDER, get_clicks_for_link
 
 
 @pytest.fixture(scope="function")
@@ -126,6 +126,7 @@ def test_get_simple_link(client, simple_link):
     assert response.headers["Location"] == simple_link.redirect_to
     db.session.refresh(simple_link)
     assert simple_link.clicks == 1
+    assert len(get_clicks_for_link(simple_link.code)) == 1
 
 
 def test_get_simple_link_as_qrcode(client, simple_link):
@@ -133,6 +134,14 @@ def test_get_simple_link_as_qrcode(client, simple_link):
     assert response.status_code == 200
     assert response.headers.get("Content-Disposition") == f"attachment; filename={simple_link.code}.png"
     assert response.content_type == "image/png"
+
+
+def test_get_simple_link_with_utm(client, simple_link):
+    response = client.get("/" + simple_link.code + "?utm_source=foo&utm_medium=bar&extra=ignore")
+    assert response.status_code == 302
+    assert response.headers["Location"] == simple_link.redirect_to + "?utm_source=foo&utm_medium=bar"
+    db.session.refresh(simple_link)
+    assert simple_link.clicks == 1
 
 
 def test_get_simple_link_but_with_parameter(client, simple_link):
@@ -163,4 +172,16 @@ def test_get_param_link_using_parameters(client, parametrized_link_with_default,
     assert response.status_code == 302
     assert response.headers["Location"] == parametrized_link_without_default.redirect_to.replace(
         PARAMETER_PLACEHOLDER, "extra", 1
+    )
+
+
+def test_get_param_link_using_parameters_with_utm(client, parametrized_link_with_default):
+    response = client.get(
+        "/" + parametrized_link_with_default.code + "/extra" + "?utm_source=foo&utm_medium=bar&extra=ignore"
+    )
+    assert response.status_code == 302
+    assert (
+        response.headers["Location"]
+        == parametrized_link_with_default.redirect_to.replace(PARAMETER_PLACEHOLDER, "extra", 1)
+        + "?utm_source=foo&utm_medium=bar"
     )

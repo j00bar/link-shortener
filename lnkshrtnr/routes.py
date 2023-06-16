@@ -31,16 +31,19 @@ def simple_redirect(code):
                 abort(404)
         else:
             redirect_to = link.redirect_to
+        utm_tags = {tag[4:]: request.args[tag] for tag in request.args if tag.startswith("utm_")}
+        logger.info("utm_tags", utm_tags=utm_tags, merged=repository.merge_utm_tags(redirect_to, utm_tags))
         if format := request.args.get("qr"):
             if format not in ["svg", "png", "eps"]:
                 logger.warning(events.INVALID_QR_FORMAT, format=format)
                 abort(400)
-            content_type, buffer = repository.qrcode_for_link(format, code)
+            content_type, buffer = repository.qrcode_for_link(format, code, **utm_tags)
             return send_file(buffer, as_attachment=True, download_name=f"{code}.{format}", mimetype=content_type)
         repository.record_click(link)
         db.session.flush() if os.getenv("TESTING") else db.session.commit()
         logger.info(events.REDIRECT_EVENT, code=code, parameter=None, result="success")
-        return redirect(redirect_to)
+        return redirect(repository.merge_utm_tags(redirect_to, utm_tags))
+
     elif request.method == "PUT":
         redirect_to = request.json.get("redirect_to", "")
         if not validators.url(redirect_to.replace(repository.PARAMETER_PLACEHOLDER, "foo", 1)):
@@ -81,11 +84,12 @@ def redirect_with_parameter(code, parameter):
         abort(404)
     else:
         redirect_to = link.redirect_to.replace(repository.PARAMETER_PLACEHOLDER, parameter, 1)
+    utm_tags = {tag[4:]: request.args[tag] for tag in request.args if tag.startswith("utm_")}
     if format := request.args.get("qr"):
         if format not in ["svg", "png", "eps"]:
             logger.warning(events.INVALID_QR_FORMAT, format=format)
             abort(400)
-        content_type, buffer = repository.qrcode_for_link(format, code, parameter)
+        content_type, buffer = repository.qrcode_for_link(format, code, parameter, **utm_tags)
         return send_file(
             buffer,
             as_attachment=True,
@@ -95,7 +99,7 @@ def redirect_with_parameter(code, parameter):
     repository.record_click(link)
     db.session.flush() if os.getenv("TESTING") else db.session.commit()
     logger.info(events.REDIRECT_EVENT, code=code, parameter=parameter, result="success")
-    return redirect(redirect_to)
+    return redirect(repository.merge_utm_tags(redirect_to, utm_tags))
 
 
 @app.route("/", methods=["POST"])
