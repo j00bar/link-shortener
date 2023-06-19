@@ -44,6 +44,7 @@ def simple_redirect(code):
         logger.info(events.REDIRECT_EVENT, code=code, parameter=None, result="success")
         response = redirect(repository.merge_utm_tags(redirect_to, utm_tags))
         response.set_cookie("clicker", str(clicker))
+        response.headers["Cache-Control"] = "no-store, private"
         return response
 
     elif request.method == "PUT":
@@ -103,6 +104,7 @@ def redirect_with_parameter(code, parameter):
     logger.info(events.REDIRECT_EVENT, code=code, parameter=parameter, result="success")
     response = redirect(repository.merge_utm_tags(redirect_to, utm_tags))
     response.set_cookie("clicker", str(clicker))
+    response.headers["Cache-Control"] = "no-store, private"
     return response
 
 

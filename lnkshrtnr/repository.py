@@ -70,10 +70,18 @@ def record_click(shortened_link):
         except ValueError:
             clicker = None
     clicker = clicker or uuid.uuid4()
+    client_ip = request.headers.get("x-forwarded-for", request.remote_addr)
+    if client_ip is not None and "," in client_ip:
+        ip_sequence = [ip.strip() for ip in client_ip.split(",")]
+        trusted_hops = int(os.getenv("XFF_TRUSTED_HOPS", "0"))
+        try:
+            client_ip = ip_sequence[-1 * (trusted_hops + 1)]
+        except IndexError:
+            client_ip = None
     click = ShortenedLinkClick(
         link_id=shortened_link.code,
         clicker=clicker,
-        client_ip=request.headers.get("x-forwarded-for", ""),
+        client_ip=client_ip,
         referer=request.headers.get("referer", ""),
         user_agent=user_agent,
         source=request.args.get("utm_source"),
