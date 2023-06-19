@@ -14,7 +14,7 @@ from .database import db
 logger = woodchipper.get_logger(__name__)
 
 
-@app.route("/<code>", methods=["GET", "PUT", "DELETE"])
+@app.route("/<code>", methods=["GET", "PUT", "DELETE"], strict_slashes=False)
 @write_requires_psk
 def simple_redirect(code):
     code = code.lower()
@@ -74,7 +74,7 @@ def simple_redirect(code):
         return "", 204
 
 
-@app.route("/<code>/<parameter>")
+@app.route("/<code>/<parameter>", strict_slashes=False)
 def redirect_with_parameter(code, parameter):
     code = code.lower()
     link = repository.get_link_by_code(code)
