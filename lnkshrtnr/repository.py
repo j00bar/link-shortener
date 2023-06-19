@@ -2,6 +2,7 @@ import os
 import random
 import re
 import string
+import uuid
 from io import BytesIO
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
@@ -62,8 +63,16 @@ def record_click(shortened_link):
         .where(ShortenedLink.code == shortened_link.code)
         .values(clicks=(ShortenedLink.clicks + 1))
     )
+    clicker = request.cookies.get("clicker")
+    if clicker:
+        try:
+            clicker = uuid.UUID(clicker)
+        except ValueError:
+            clicker = None
+    clicker = clicker or uuid.uuid4()
     click = ShortenedLinkClick(
         link_id=shortened_link.code,
+        clicker=clicker,
         client_ip=request.headers.get("x-forwarded-for", ""),
         referer=request.headers.get("referer", ""),
         user_agent=user_agent,
@@ -75,6 +84,7 @@ def record_click(shortened_link):
     )
     db.session.add(click)
     db.session.flush()
+    return clicker
 
 
 def get_link_by_code(code):

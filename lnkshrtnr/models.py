@@ -20,6 +20,7 @@ class ShortenedLink(db.Model):
 
 class ShortenedLinkClick(db.Model):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    clicker = Column(UUID(as_uuid=True), default=uuid.uuid4)
     link_id = Column(ForeignKey(ShortenedLink.code))
     clicked_at = Column(DateTime, default=func.now())
     client_ip = Column(String, nullable=False)

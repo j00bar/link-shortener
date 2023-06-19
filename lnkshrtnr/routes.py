@@ -39,10 +39,12 @@ def simple_redirect(code):
                 abort(400)
             content_type, buffer = repository.qrcode_for_link(format, code, **utm_tags)
             return send_file(buffer, as_attachment=True, download_name=f"{code}.{format}", mimetype=content_type)
-        repository.record_click(link)
+        clicker = repository.record_click(link)
         db.session.flush() if os.getenv("TESTING") else db.session.commit()
         logger.info(events.REDIRECT_EVENT, code=code, parameter=None, result="success")
-        return redirect(repository.merge_utm_tags(redirect_to, utm_tags))
+        response = redirect(repository.merge_utm_tags(redirect_to, utm_tags))
+        response.set_cookie("clicker", str(clicker))
+        return response
 
     elif request.method == "PUT":
         redirect_to = request.json.get("redirect_to", "")
@@ -96,10 +98,12 @@ def redirect_with_parameter(code, parameter):
             download_name=f"{code}-{parameter}.{format}",
             mimetype=content_type,
         )
-    repository.record_click(link)
+    clicker = repository.record_click(link)
     db.session.flush() if os.getenv("TESTING") else db.session.commit()
     logger.info(events.REDIRECT_EVENT, code=code, parameter=parameter, result="success")
-    return redirect(repository.merge_utm_tags(redirect_to, utm_tags))
+    response = redirect(repository.merge_utm_tags(redirect_to, utm_tags))
+    response.set_cookie("clicker", str(clicker))
+    return response
 
 
 @app.route("/", methods=["POST"])
