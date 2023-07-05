@@ -37,12 +37,14 @@ def qrcode_for_link(format, code, param=None, **utm_tags):
     url = f"https://{os.getenv('HOSTNAME')}/{code}{'/'+param if param else ''}"
     url = merge_utm_tags(url, utm_tags)
     qr = pyqrcode.create(url, error="H")
-    buffer = StringIO() if format == "eps" else BytesIO()
+    buffer = BytesIO()
     if format == "png":
         qr.png(buffer, scale=10)
         content_type = "image/png"
     if format == "eps":
-        qr.eps(buffer, scale=10)
+        temp_buffer = StringIO()
+        qr.eps(temp_buffer, scale=10)
+        buffer.write(temp_buffer.getvalue().encode("utf8"))
         content_type = "application/postscript"
     if format == "svg":
         qr.svg(buffer, scale=10)
