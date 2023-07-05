@@ -3,7 +3,7 @@ import random
 import re
 import string
 import uuid
-from io import BytesIO
+from io import BytesIO, StringIO
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 import pyqrcode
@@ -37,7 +37,7 @@ def qrcode_for_link(format, code, param=None, **utm_tags):
     url = f"https://{os.getenv('HOSTNAME')}/{code}{'/'+param if param else ''}"
     url = merge_utm_tags(url, utm_tags)
     qr = pyqrcode.create(url, error="H")
-    buffer = BytesIO()
+    buffer = StringIO() if format == "eps" else BytesIO()
     if format == "png":
         qr.png(buffer, scale=10)
         content_type = "image/png"
